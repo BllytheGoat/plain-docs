@@ -115,10 +115,10 @@ $("go").addEventListener("click",async()=>{
   $("status").textContent="Reading the fine print…";
   if(!AIEngine.isConfigured()){ AIEngine.settingsUI(); return; }
   try{
-    const d=await AIEngine.chat`You translate legal documents into plain English for everyday people.
+    const d=await AIEngine.chat(`You translate legal documents into plain English for everyday people.
 Reply ONLY with minified JSON:
 {"summary":"2-3 sentence plain-English summary of what this document does","gotchas":[{"title":"short clause name","plain":"what it actually means","severity":"high|medium|low"}],"rights":["what you CAN do"],"obligations":["what you MUST do"]}
-Rules: gotchas = clauses that limit user rights, allow data selling, auto-renewal, arbitration, unilateral changes etc (max 6, ordered by severity). Plain language, no legalese. rights/obligations max 4 items each.`,t,{max_tokens:1200});
+Rules: gotchas = clauses that limit user rights, allow data selling, auto-renewal, arbitration, unilateral changes etc (max 6, ordered by severity). Plain language, no legalese. rights/obligations max 4 items each.`, t, {max_tokens:1200});
     let html=`<section class="block"><h2>The short version</h2><p class="plain-text">${d.summary||""}</p></section>`;
     if(d.gotchas?.length){
       html+=`<section class="block"><h2>Clauses that work against you</h2><ul class="terms">${
