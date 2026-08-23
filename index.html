@@ -90,6 +90,7 @@
     <div class="row">
       <button class="go" id="go">Translate to plain English</button>
       <button class="clear" id="clear">Clear</button>
+      <button class="clear" id="settings" type="button">⚙ AI key</button>
     </div>
     <p class="status" id="status" role="status"></p>
 
@@ -112,8 +113,9 @@ $("go").addEventListener("click",async()=>{
   if(t.length<200){$("status").textContent="Paste more of the document — at least a few paragraphs so nothing gets missed.";return;}
   $("go").disabled=true;$("result").style.display="none";
   $("status").textContent="Reading the fine print…";
+  if(!AIEngine.isConfigured()){ AIEngine.settingsUI(); return; }
   try{
-    const d=await AIEngine.chat(`You translate legal documents into plain English for everyday people.
+    const d=await AIEngine.chat`You translate legal documents into plain English for everyday people.
 Reply ONLY with minified JSON:
 {"summary":"2-3 sentence plain-English summary of what this document does","gotchas":[{"title":"short clause name","plain":"what it actually means","severity":"high|medium|low"}],"rights":["what you CAN do"],"obligations":["what you MUST do"]}
 Rules: gotchas = clauses that limit user rights, allow data selling, auto-renewal, arbitration, unilateral changes etc (max 6, ordered by severity). Plain language, no legalese. rights/obligations max 4 items each.`,t,{max_tokens:1200});
@@ -134,6 +136,7 @@ Rules: gotchas = clauses that limit user rights, allow data selling, auto-renewa
   }catch(e){$("status").textContent="Couldn't analyze ("+e.message+"). Try again.";}
   finally{$("go").disabled=false;}
 });
+$("settings").addEventListener("click", ()=> AIEngine.settingsUI());
 $("clear").addEventListener("click",()=>{$("doc").value="";$("status").textContent="";$("result").style.display="none";});
 </script>
 </body>
