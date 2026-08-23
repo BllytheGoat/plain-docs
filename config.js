@@ -1,0 +1,1 @@
+window.SHIELD_KEY="{{GROQ_KEY_PLACEHOLDER}}";
