@@ -103,40 +103,20 @@
 </div>
 
 <script src="config.js"></script>
+<script src="ai-engine.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-function getKey(){
-  let k=(window.SHIELD_KEY||"").trim();
-  if(k.includes("{{")||k.length<20) k=localStorage.getItem("shield_groq")||"";
-  if(!k){
-    const e=prompt("Demo mode: paste a free Groq API key (console.groq.com). It stays in your browser only.");
-    if(e){localStorage.setItem("shield_groq",e.trim());k=e.trim();}
-  }
-  return k;
-}
+/* key logic -> ai-engine.js */
 $("go").addEventListener("click",async()=>{
   const t=$("doc").value.trim();
   if(t.length<200){$("status").textContent="Paste more of the document — at least a few paragraphs so nothing gets missed.";return;}
   $("go").disabled=true;$("result").style.display="none";
   $("status").textContent="Reading the fine print…";
   try{
-    const r=await fetch("https://api.groq.com/openai/v1/chat/completions",{
-      method:"POST",
-      headers:{"Authorization":"Bearer "+getKey(),"Content-Type":"application/json"},
-      body:JSON.stringify({
-        model:"groq/compound-mini",
-        messages:[
-          {role:"system",content:`You translate legal documents into plain English for everyday people.
+    const d=await AIEngine.chat(`You translate legal documents into plain English for everyday people.
 Reply ONLY with minified JSON:
 {"summary":"2-3 sentence plain-English summary of what this document does","gotchas":[{"title":"short clause name","plain":"what it actually means","severity":"high|medium|low"}],"rights":["what you CAN do"],"obligations":["what you MUST do"]}
-Rules: gotchas = clauses that limit user rights, allow data selling, auto-renewal, arbitration, unilateral changes etc (max 6, ordered by severity). Plain language, no legalese. rights/obligations max 4 items each.`},
-          {role:"user",content:t}
-        ],
-        response_format:{type:"json_object"},max_tokens:1200
-      })
-    });
-    if(!r.ok)throw new Error("API "+r.status);
-    const d=JSON.parse(r.json().choices[0].message.content);
+Rules: gotchas = clauses that limit user rights, allow data selling, auto-renewal, arbitration, unilateral changes etc (max 6, ordered by severity). Plain language, no legalese. rights/obligations max 4 items each.`,t,{max_tokens:1200});
     let html=`<section class="block"><h2>The short version</h2><p class="plain-text">${d.summary||""}</p></section>`;
     if(d.gotchas?.length){
       html+=`<section class="block"><h2>Clauses that work against you</h2><ul class="terms">${
