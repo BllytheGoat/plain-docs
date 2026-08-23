@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plain-English Docs — know what you agreed to</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAF7F2; --ink:#1A2E22; --muted:#5B6B60;
+    --line:#DDD6C9; --accent:#C2410C; --good:#166534;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:"Inter",-apple-system,sans-serif; line-height:1.65;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:48px 20px}
+  header{margin-bottom:36px}
+  .brand{font-weight:600;font-size:.95rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  h1{
+    font-family:"Fraunces",serif;font-weight:700;
+    font-size:clamp(2rem,5.5vw,3rem);line-height:1.12;letter-spacing:-.01em;
+    margin-top:16px;
+  }
+  h1 em{font-style:italic;color:var(--accent)}
+  .sub{color:var(--muted);margin-top:12px;font-size:1.05rem;max-width:56ch}
+
+  label{display:block;font-weight:600;font-size:.85rem;text-transform:uppercase;
+    letter-spacing:.08em;color:var(--muted);margin-bottom:10px}
+  textarea{
+    width:100%;min-height:220px;padding:18px;border:1.5px solid var(--ink);
+    border-radius:4px;background:#fff;font-family:inherit;font-size:.98rem;
+    line-height:1.6;resize:vertical;
+  }
+  textarea:focus{outline:3px solid var(--ink);outline-offset:2px}
+  .row{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap}
+  button.go{
+    flex:1;min-width:220px;padding:15px 24px;border:none;border-radius:4px;
+    background:var(--ink);color:var(--paper);font-size:1.02rem;font-weight:600;
+    cursor:pointer;font-family:inherit;transition:opacity .15s;
+  }
+  button.go:hover:not(:disabled){opacity:.88}
+  button.go:disabled{opacity:.55;cursor:wait}
+  button.clear{padding:15px 22px;border:1.5px solid var(--ink);border-radius:4px;
+    background:transparent;font-weight:500;font-size:.98rem;cursor:pointer;font-family:inherit}
+  .status{margin-top:12px;color:var(--muted);font-size:.92rem;min-height:1.3em}
+
+  #result{display:none;margin-top:40px}
+  section.block{
+    background:#fff;border:1px solid var(--line);border-radius:6px;
+    padding:26px 24px;margin-bottom:18px;animation:rise .35s ease;
+  }
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  section.block h2{
+    font-family:"Fraunces",serif;font-size:1.25rem;margin-bottom:4px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .tag{font-family:"Inter";font-size:.68rem;font-weight:600;letter-spacing:.1em;
+    text-transform:uppercase;padding:3px 9px;border-radius:99px}
+  .tag.plain{background:#DCFCE7;color:var(--good)}
+  .tag.trap{background:#FEE2E2;color:#991B1B}
+  .tag.money{background:#FEF3C7;color:#92400E}
+  .plain-text{font-size:1.02rem}
+  ul.terms{list-style:none}
+  ul.terms li{padding:11px 0;border-top:1px dashed var(--line);font-size:.97rem}
+  ul.terms li:first-child{border-top:none}
+  li b{font-weight:600}
+
+  footer{margin-top:48px;border-top:1px solid var(--line);padding-top:18px;
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;
+    font-size:.85rem;color:var(--muted)}
+  a{color:var(--ink)}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">Plain-English Docs</div>
+    <h1>Nobody reads terms of service. <em>Now you don't have to.</em></h1>
+    <p class="sub">Paste any terms of service, privacy policy or user agreement. Get what it actually means in plain English — plus the clauses that quietly work against you.</p>
+  </header>
+
+  <main>
+    <label for="doc">The document (or just paste its URL text)</label>
+    <textarea id="doc" placeholder="Paste the full terms / policy text here…"></textarea>
+    <div class="row">
+      <button class="go" id="go">Translate to plain English</button>
+      <button class="clear" id="clear">Clear</button>
+    </div>
+    <p class="status" id="status" role="status"></p>
+
+    <div id="result" aria-live="polite"></div>
+  </main>
+
+  <footer>
+    <span>Plain-English Docs · free & instant</span>
+    <span><a href="https://bllythegoat.github.io/scam-shield/">Scam Shield</a> · <a href="https://bllythegoat.github.io/contract-clarity/">Contract Clarity</a></span>
+  </footer>
+</div>
+
+<script src="config.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+function getKey(){
+  let k=(window.SHIELD_KEY||"").trim();
+  if(k.includes("{{")||k.length<20) k=localStorage.getItem("shield_groq")||"";
+  if(!k){
+    const e=prompt("Demo mode: paste a free Groq API key (console.groq.com). It stays in your browser only.");
+    if(e){localStorage.setItem("shield_groq",e.trim());k=e.trim();}
+  }
+  return k;
+}
+$("go").addEventListener("click",async()=>{
+  const t=$("doc").value.trim();
+  if(t.length<200){$("status").textContent="Paste more of the document — at least a few paragraphs so nothing gets missed.";return;}
+  $("go").disabled=true;$("result").style.display="none";
+  $("status").textContent="Reading the fine print…";
+  try{
+    const r=await fetch("https://api.groq.com/openai/v1/chat/completions",{
+      method:"POST",
+      headers:{"Authorization":"Bearer "+getKey(),"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model:"groq/compound-mini",
+        messages:[
+          {role:"system",content:`You translate legal documents into plain English for everyday people.
+Reply ONLY with minified JSON:
+{"summary":"2-3 sentence plain-English summary of what this document does","gotchas":[{"title":"short clause name","plain":"what it actually means","severity":"high|medium|low"}],"rights":["what you CAN do"],"obligations":["what you MUST do"]}
+Rules: gotchas = clauses that limit user rights, allow data selling, auto-renewal, arbitration, unilateral changes etc (max 6, ordered by severity). Plain language, no legalese. rights/obligations max 4 items each.`},
+          {role:"user",content:t}
+        ],
+        response_format:{type:"json_object"},max_tokens:1200
+      })
+    });
+    if(!r.ok)throw new Error("API "+r.status);
+    const d=JSON.parse(r.json().choices[0].message.content);
+    let html=`<section class="block"><h2>The short version</h2><p class="plain-text">${d.summary||""}</p></section>`;
+    if(d.gotchas?.length){
+      html+=`<section class="block"><h2>Clauses that work against you</h2><ul class="terms">${
+        d.gotchas.map(g=>`<li><b>${g.title}</b> <span class="tag ${g.severity==='high'?'trap':g.severity==='medium'?'money':'plain'}">${g.severity}</span><br>${g.plain}</li>`).join("")}</ul></section>`;
+    }
+    if(d.rights?.length||d.obligations?.length){
+      html+=`<section class="block"><h2>Your side of the deal</h2><ul class="terms">`;
+      html+=(d.rights||[]).map(x=>`<li>✅ You can: ${x}</li>`).join("");
+      html+=(d.obligations||[]).map(x=>`<li>📌 You must: ${x}</li>`).join("");
+      html+=`</ul></section>`;
+    }
+    html+=`<p style="font-size:.82rem;color:var(--muted);text-align:center;margin-top:8px">Automated plain-language reading — not legal advice.</p>`;
+    $("result").innerHTML=html;$("result").style.display="block";
+    $("status").textContent="";
+  }catch(e){$("status").textContent="Couldn't analyze ("+e.message+"). Try again.";}
+  finally{$("go").disabled=false;}
+});
+$("clear").addEventListener("click",()=>{$("doc").value="";$("status").textContent="";$("result").style.display="none";});
+</script>
+</body>
+</html>
